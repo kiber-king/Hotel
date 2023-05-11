@@ -17,10 +17,9 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
-from hotel.views import RoomAPIView
-
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/v1/roomlist/', RoomAPIView.as_view()),
+    path('', include('hotel.urls')),
+    path('auth/', include('users.urls')),
     path('auth/', include('django.contrib.auth.urls')),
 ]
