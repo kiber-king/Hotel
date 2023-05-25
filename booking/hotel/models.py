@@ -7,7 +7,7 @@ User = get_user_model()
 # Create your models here.
 class Room(models.Model):
     number = models.IntegerField('Number of room', unique=True)
-    cost = models.FloatField('Price for room', default=0)
+    cost = models.IntegerField('Price for room', default=0)
     count = models.PositiveIntegerField('Count')
 
     class Meta:
