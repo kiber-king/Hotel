@@ -4,21 +4,16 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from .filters import filters, AvailableRoomsFilter, RoomFilter
 from .models import Room, Booked
 from .serializers import RoomSerializer, BookedSerializer
 
 
 class RoomList(APIView):
     def get(self, request):
-        cost = self.request.query_params.get('cost', None)
-        count = self.request.query_params.get('count', None)
-        if cost:
-            rooms = Room.objects.filter(cost__lte=cost)
-        elif count:
-            rooms = Room.objects.filter(count__gte=count)
-        else:
-            rooms = Room.objects.all()
-        serializer = RoomSerializer(rooms, many=True)
+        queryset = Room.objects.all()
+        filter = RoomFilter(request.GET, queryset=queryset)
+        serializer = RoomSerializer(filter.qs, many=True)
         return Response(serializer.data)
 
     def post(self, request):
@@ -55,16 +50,8 @@ class BookedDelete(DestroyAPIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
-class AvailableRoomList(generics.ListAPIView):
+class AvailableRoomsListAPIView(generics.ListAPIView):
+    queryset = Room.objects.all()
     serializer_class = RoomSerializer
-
-    def get_queryset(self):
-        start_time = self.request.query_params.get('start_time', None)
-        end_time = self.request.query_params.get('end_time', None)
-        if not start_time or not end_time:
-            return Room.objects.none()
-        bookings = Booked.objects.filter(start_time__lte=end_time,
-                                         end_time__gte=start_time)
-        booked_rooms = bookings.values_list('room', flat=True)
-        available_rooms = Room.objects.exclude(id__in=booked_rooms)
-        return available_rooms
+    filter_backends = [filters.DjangoFilterBackend]
+    filterset_class = AvailableRoomsFilter
