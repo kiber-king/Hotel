@@ -4,10 +4,10 @@ from django.db import models
 User = get_user_model()
 
 
-# Create your models here.
 class Room(models.Model):
     number = models.IntegerField('Number of room', unique=True)
-    cost = models.IntegerField('Price for room', default=0)
+    cost = models.DecimalField('Price for room', max_digits=6,
+                               decimal_places=2)
     count = models.PositiveIntegerField('Count')
 
     class Meta:

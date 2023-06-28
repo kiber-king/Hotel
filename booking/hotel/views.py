@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.generics import DestroyAPIView
 from rest_framework.permissions import IsAuthenticated
@@ -10,18 +11,19 @@ from .serializers import RoomSerializer, BookedSerializer
 
 
 class RoomList(APIView):
-    def get(self, request):
-        queryset = Room.objects.all()
-        filter = RoomFilter(request.GET, queryset=queryset)
+    def room_list(self, request):
+        if request.method == 'POST':
+            serializer = RoomSerializer(data=request.data, many=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data,
+                                status=status.HTTP_201_CREATED)
+            return Response(serializer.errors,
+                            status=status.HTTP_400_BAD_REQUEST)
+        rooms = Room.objects.all()
+        filter = RoomFilter(request.GET, queryset=rooms)
         serializer = RoomSerializer(filter.qs, many=True)
         return Response(serializer.data)
-
-    def post(self, request):
-        serializer = RoomSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors)
 
 
 class BookedList(generics.ListCreateAPIView):
@@ -38,16 +40,10 @@ class BookedList(generics.ListCreateAPIView):
 
 
 class BookedDelete(DestroyAPIView):
+    serializer_class = BookedSerializer
     queryset = Booked.objects.all()
     permission_classes = [IsAuthenticated]
-
-    def delete(self, request, *args, **kwargs):
-        try:
-            booking = Booked.objects.get(id=self.kwargs['pk'])
-            booking.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+    obj = get_object_or_404(Booked, id=id)
 
 
 class AvailableRoomsListAPIView(generics.ListAPIView):
